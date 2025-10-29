@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReviveWare</title>
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="color-scheme" content="light only" />
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>ReviveWare</h1>
+            <p class="subtitle">Ingresa las características de tu laptop y te sugeriremos un sistema operativo adecuado.</p>
+        </header>
+
+        <main class="grid">
+            <section class="card" aria-labelledby="form-title">
+                <h2 id="form-title">Características del equipo</h2>
+
+                <form id="laptopForm" class="form" novalidate>
+                    <div class="field">
+                        <label for="cpu">CPU (GHz)</label>
+                        <input type="number" id="cpu" step="0.1" min="0" inputmode="decimal" placeholder="Ej. 2.4" required />
+                        <small class="hint">Velocidad base del procesador</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="ram">RAM (GB)</label>
+                        <input type="number" id="ram" min="1" inputmode="numeric" placeholder="Ej. 4" required />
+                        <small class="hint">Memoria instalada</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="hdd">Disco (GB)</label>
+                        <input type="number" id="hdd" min="10" inputmode="numeric" placeholder="Ej. 128" required />
+                        <small class="hint">Capacidad del almacenamiento</small>
+                    </div>
+
+                    <div class="field">
+                        <label for="year">Año de fabricación</label>
+                        <input type="number" id="year" min="1995" max="2025" inputmode="numeric" placeholder="Ej. 2014" />
+                        <small class="hint">Opcional, ayuda a afinar la sugerencia</small>
+                    </div>
+
+                    <div class="actions">
+                        <button class="btn primary" type="button" id="btnSugerir">Sugerir Sistema Operativo</button>
+                        <button class="btn ghost" type="reset" id="btnLimpiar">Limpiar</button>
+                    </div>
+                </form>
+
+                <div id="resultado" class="resultado" role="status" aria-live="polite"></div>
+            </section>
+
+            <section class="card" aria-labelledby="centros-title">
+                <h2 id="centros-title">Centros de reciclaje de dispositivos electrónicos</h2>
+                <p>Si tu laptop ya no sirve, llévala a un centro autorizado:</p>
+                <ul id="centros" class="centros"></ul>
+                <p class="note">Tip: Cambiar a SSD y aumentar RAM suele “revivir” equipos más que cualquier software.</p>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>Hecho con criterio clásico y eficiencia moderna.</p>
+        </footer>
+    </div>
+
+    <!-- Chatbot flotante -->
+    <button class="chat-toggle" id="chatToggle" aria-controls="chatbot" aria-expanded="false" aria-label="Abrir chatbot">
+        <span>Chat</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 3h20v14H6l-4 4V3z"/></svg>
+    </button>
+
+    <section class="chatbot" id="chatbot" aria-hidden="true" aria-label="Asistente de recomendaciones">
+        <header class="chatbot__header">
+            <strong>Asistente</strong>
+            <button class="icon-btn" id="chatClose" aria-label="Cerrar chatbot">×</button>
+        </header>
+        <div class="chatbot__body" id="chatBody" role="log" aria-live="polite"></div>
+        <form class="chatbot__input" id="chatForm" autocomplete="off">
+            <input id="chatText" type="text" placeholder="Escribe tu duda (ej. '¿Windows o Linux?')" aria-label="Mensaje para el asistente" />
+            <button class="btn primary" type="submit">Enviar</button>
+        </form>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
