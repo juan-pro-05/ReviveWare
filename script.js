@@ -551,7 +551,6 @@ function responder(input){
       </ul>
     `;
   }
-
   // fallback avanzado: ofrecer acciones concretas
   return `
     <p>No estoy seguro exactamente, pero puedo ayudar. Prueba alguna de estas acciones:</p>
