@@ -171,10 +171,23 @@ $("#laptopForm")?.addEventListener("keydown", (e) => { if (e.key === "Enter"){ e
 
 // ========== Centros (demo) ==========
 const centrosData = [
-  { nombre: "Centro de Acopio Universitario", url: "#", ciudad: "CDMX" },
-  { nombre: "Punto Verde Delegacional", url: "#", ciudad: "CDMX" },
-  { nombre: "Recicladora Electrónica Local", url: "#", ciudad: "Edo. Méx." },
+  {
+    nombre: "Centro de Acopio HidalgoTec",
+    ciudad: "Pachuca, Hidalgo",
+    url: "https://www.google.com/maps/search/?api=1&query=Centro+de+Acopio+Electrónico+HidalgoTec+Pachuca"
+  },
+  {
+    nombre: "Recicladora Verde Hidalgo",
+    ciudad: "Tulancingo, Hidalgo",
+    url: "https://www.google.com/maps/search/?api=1&query=Recicladora+Verde+Hidalgo+Tulancingo"
+  },
+  {
+    nombre: "EcoCentro Universitario Hidalgo",
+    ciudad: "Tizayuca, Hidalgo",
+    url: "https://www.google.com/maps/search/?api=1&query=EcoCentro+Universitario+Hidalgo+Tizayuca"
+  },
 ];
+
 function renderCentros(){
   const ul = $("#centros");
   if (!ul) return;
@@ -297,4 +310,256 @@ function sugerenciaYear(y){
   if (y < 2015) return "Por el año, Windows 10 puede ir, pero Linux ligero rendirá mejor.";
   if (y >= 2018) return "Por el año, podrías cumplir con Windows 11 (verifica TPM 2.0 y CPU).";
   return "";
+}
+/* =========================
+   Motor de respuestas mejorado (FAQ + coincidencias)
+   Reemplaza la función responder existente por esta versión.
+   ========================= */
+
+// Lista de preguntas frecuentes (puedes ampliarla)
+const FAQS = [
+  {
+    keys: ["requisitos", "mínimos", "minimos", "requerimientos"],
+    answer: `
+      <p><strong>Guía de requisitos (orientativa):</strong></p>
+      <ul>
+        <li><strong>Muy ligero:</strong> &lt; 2 GB RAM o CPU &lt; 1.2 GHz → antiX, Puppy, Lubuntu.</li>
+        <li><strong>Ligero:</strong> 2–4 GB RAM → Lubuntu/Xubuntu, Linux Mint XFCE.</li>
+        <li><strong>Intermedio:</strong> 4–8 GB RAM → Linux Mint (Cinnamon/XFCE), Ubuntu optimizado, Windows 10.</li>
+        <li><strong>Capaz:</strong> ≥ 8 GB RAM → Ubuntu/Fedora/Mint; Windows 11 si cumple TPM/CPU.</li>
+      </ul>
+      <p><em>Consejo:</em> cambiar a <strong>SSD</strong> y aumentar RAM suele dar la mejora más notable.</p>
+    `
+  },
+  {
+    keys: ["ssd", "disco", "hdd", "almacenamiento"],
+    answer: `
+      <p><strong>Actualizar a SSD:</strong></p>
+      <ol>
+        <li>Un SSD reduce tiempos de arranque y carga de aplicaciones dramáticamente.</li>
+        <li>Con 4 GB de RAM + SSD suele ser suficiente para Windows 10 o una distribución Linux completa.</li>
+        <li>Si tu disco es &lt; 64 GB, considera <em>ChromeOS Flex</em> o una instalación Linux mínima.</li>
+      </ol>
+      <p>Si quieres, te doy pasos para clonar tu HDD a SSD según tu sistema operativo (Windows/Linux).</p>
+    `
+  },
+  {
+    keys: ["windows 11", "win11", "tpm", "tpms"],
+    answer: `
+      <p><strong>Compatibilidad Windows 11:</strong></p>
+      <ul>
+        <li>Windows 11 normalmente requiere <strong>TPM 2.0</strong> y CPUs soportadas (la mayoría desde 2018).</li>
+        <li>Si tu equipo no cumple, <strong>Windows 10</strong> o una distribución Linux son opciones sólidas.</li>
+      </ul>
+      <p>Puedo verificar requisitos aproximados si me das el año y CPU de tu equipo (rellena el formulario).</p>
+    `
+  },
+  {
+    keys: ["linux", "distro", "distros", "mint", "ubuntu", "lubuntu"],
+    answer: `
+      <p><strong>¿Qué distro elegir?</strong></p>
+      <ul>
+        <li><strong>antiX / Puppy:</strong> para hardware extremadamente limitado.</li>
+        <li><strong>Lubuntu / Xubuntu:</strong> ligeras y accesibles.</li>
+        <li><strong>Linux Mint (XFCE/Cinnamon):</strong> equilibrio sencillez/rendimiento.</li>
+        <li><strong>Ubuntu / Fedora:</strong> para equipos modernos y usuarios que quieren software actualizado.</li>
+      </ul>
+      <p>Si quieres, te doy un enlace a una ISO o una guía de instalación paso a paso.</p>
+    `
+  },
+  {
+    keys: ["chromeos", "chrome os", "flex"],
+    answer: `
+      <p><strong>ChromeOS Flex</strong></p>
+      <ul>
+        <li>Ideal si tu uso es sólo navegador y quieres un sistema muy ligero.</li>
+        <li>Funciona bien en hardware modesto y con poco espacio en disco.</li>
+        <li>Requiere comprobar compatibilidad con el instalador oficial.</li>
+      </ul>
+    `
+  },
+  {
+    keys: ["guardar", "reciclaje", "guardar reciclaje", "guardar datos"],
+    answer: `
+      <p><strong>Cómo guardar un reciclaje en la plataforma:</strong></p>
+      <ol>
+        <li>Inicia sesión (botón <em>Iniciar sesión</em> en la cabecera).</li>
+        <li>Rellena el formulario de características o el formulario específico de reciclaje (tipo, cantidad).</li>
+        <li>Pulsa el botón para 'Guardar' o 'Sugerir' (si está integrado al flujo).</li>
+      </ol>
+      <p>Si usas Supabase o nuestra API, los reciclajes se guardan automáticamente con tu usuario autenticado.</p>
+    `
+  },
+  {
+    keys: ["centro", "centros", "mapa", "maps", "hidalgo", "pachuca", "tulancingo"],
+    answer: `
+      <p><strong>Centros en Hidalgo</strong></p>
+      <p>He listado algunos centros en Hidalgo en la sección derecha. Haz clic en <em>Ver en Google Maps</em> para abrir la ruta en Maps.</p>
+      <p>Si me das tu ciudad exacta, puedo sugerir el centro más cercano.</p>
+    `
+  },
+  {
+    keys: ["privacidad", "datos", "seguridad", "protección", "gdpr", "lfpdppp"],
+    answer: `
+      <p><strong>Privacidad y seguridad de datos</strong></p>
+      <ul>
+        <li>Las contraseñas se deben guardar <strong>hashed</strong> (bcrypt) en el servidor.</li>
+        <li>Usamos HTTPS para transmitir datos y JWT para autenticación.</li>
+        <li>Los reportes públicos se sirven en formato <em>agregado y anónimo</em>.</li>
+      </ul>
+      <p>Si quieres, te doy el esqueleto de la política de privacidad que puedes usar en tu proyecto.</p>
+    `
+  },
+  {
+    keys: ["recompensa", "recompensas", "puntos", "canje"],
+    answer: `
+      <p><strong>Cómo funcionan las recompensas</strong></p>
+      <ol>
+        <li>Cada reciclaje registrado suma puntos según tipo y cantidad.</li>
+        <li>Los puntos se acumulan en tu cuenta y puedes canjearlos por descuentos o beneficios en aliados.</li>
+        <li>El cálculo de puntos y catálogo de canjes se configura desde el panel administrativo.</li>
+      </ol>
+      <p>¿Quieres una tabla de ejemplo de conversión Kg → Puntos?</p>
+    `
+  },
+  {
+    keys: ["soporte", "contacto", "ayuda", "manual"],
+    answer: `
+      <p><strong>Soporte y documentación</strong></p>
+      <ul>
+        <li>Manual de usuario: disponible en la sección de Documentación (puedo generar uno básico para tu proyecto).</li>
+        <li>Soporte técnico: ofrece email y horarios de atención — te ayudo a crear un texto estándar.</li>
+      </ul>
+    `
+  },
+  {
+    keys: ["legal", "normativas", "cumplimiento", "regulaciones"],
+    answer: `
+      <p><strong>Cumplimiento y normativas</strong></p>
+      <p>Para reportes oficiales y trazabilidad te recomendamos:</p>
+      <ul>
+        <li>Registrar: fecha, tipo de residuo, cantidad, centro receptor y empresa recicladora.</li>
+        <li>Generar reportes agregados mensuales para autoridades.</li>
+        <li>Guardar evidencias y bitácoras de recolección durante el periodo exigido por la normativa local.</li>
+      </ul>
+    `
+  }
+];
+
+// función de búsqueda simple: devuelve la primera FAQ cuya key coincida
+function findFAQAnswer(q) {
+  const text = q.toLowerCase();
+  // coincidencia por keywords
+  for (const faq of FAQS) {
+    for (const k of faq.keys) {
+      if (text.includes(k)) return faq.answer;
+    }
+  }
+  return null;
+}
+
+// función que intenta aproximar respuestas más ricas
+function responder(input){
+  const q = (input || "").trim();
+  if (!q) return "Dime qué necesitas: usa palabras como 'requisitos', 'SSD', 'Linux', 'Windows', 'reciclaje' o 'centros'.";
+
+  // saludos rápidos
+  if (/\b(hola|buenas|hey|saludos)\b/i.test(q)) {
+    return "¡Hola! Soy tu asistente. Puedes pedirme: 'requisitos', 'sugerencia', 'SSD', 'Windows 11', 'Linux', 'centros', 'guardar reciclaje', o 'privacidad'.";
+  }
+
+  // Intención de ayuda específica: si menciona 'suger' o 'evalu' o 'recom', hacemos énfasis en datos del formulario
+  if (/\b(suger|recomend|evalu|qué pongo|que pongo|recomendación)\b/i.test(q)) {
+    // si tenemos datos del formulario, damos respuesta personalizada
+    const cpu = parseFloat($("#cpu")?.value);
+    const ram = parseInt($("#ram")?.value || "0", 10);
+    const hdd = parseInt($("#hdd")?.value || "0", 10);
+    const year = parseInt($("#year")?.value || "0", 10);
+
+    if (!isNaN(cpu) && !isNaN(ram) && !isNaN(hdd) && cpu > 0 && ram > 0 && hdd > 0) {
+      // delegar al sugeridor principal (la función que ya tienes)
+      // retornamos texto HTML con la sugerencia inmediata
+      // reutilizamos la función sugerirOS para consistencia: la llamamos pero no queremos que modifique el DOM aquí.
+      // En su lugar, replicamos la lógica mínima:
+      let perfil = "", sugerencias = [], notas = [];
+      if (ram < 2 || cpu < 1.2) {
+        perfil = "Muy limitado";
+        sugerencias = ["antiX Linux", "Puppy Linux", "Lubuntu"];
+      } else if ((ram >=2 && ram <4) || cpu < 1.6) {
+        perfil = "Limitado";
+        sugerencias = ["Lubuntu / Xubuntu", "Linux Mint XFCE"];
+      } else if (ram >=4 && ram <8) {
+        perfil = "Intermedio";
+        sugerencias = ["Linux Mint (XFCE/Cinnamon)", "Ubuntu optimizado", "Windows 10"];
+      } else {
+        perfil = "Capaz";
+        sugerencias = ["Ubuntu / Fedora", "Linux Mint Cinnamon", "Windows 11 (si cumple TPM)"];
+      }
+      if (year) {
+        if (year < 2010) notas.push("Equipo muy antiguo: prioriza distros ligeras.");
+        else if (year < 2015) notas.push("Windows 10 puede funcionar; Linux ligero rinde mejor.");
+        else if (year >= 2018) notas.push("Podrías ser compatible con Windows 11; verifica TPM 2.0.");
+      }
+      if (hdd < 64) notas.push("Almacenamiento reducido: considera ChromeOS Flex o instalaciones mínimas.");
+      else if (hdd < 120) notas.push("Instala solo lo esencial para ahorrar espacio.");
+      else notas.push("Si instalas un SSD, el rendimiento mejorará notablemente.");
+
+      return `
+        <p><strong>Perfil estimado:</strong> ${perfil}</p>
+        <p><strong>Sugerencias:</strong></p>
+        <ul>${sugerencias.map(s => `<li>${s}</li>`).join("")}</ul>
+        ${notas.length ? `<p><strong>Notas:</strong></p><ul>${notas.map(n => `<li>${n}</li>`).join("")}</ul>` : ""}
+      `;
+    } else {
+      return "Para darte una recomendación precisa, completa <strong>CPU, RAM y Disco</strong> en el formulario y pulsa 'Sugerir Sistema Operativo'.";
+    }
+  }
+
+  // busca en FAQS
+  const faqAnswer = findFAQAnswer(q);
+  if (faqAnswer) return faqAnswer;
+
+  // preguntas relacionadas con autenticación / guardar en BD / api
+  if (/\b(login|registrar|registro|registro cuenta|iniciar sesión|crear cuenta)\b/i.test(q)) {
+    return `
+      <p><strong>Registro e inicio de sesión:</strong></p>
+      <ol>
+        <li>Haz clic en <em>Iniciar sesión</em> (arriba) y selecciona registrar o usa la opción de signup.</li>
+        <li>Si tu proyecto usa Supabase/Firebase o la API, el frontend enviará correo/contraseña al backend y recibirás un token.</li>
+        <li>Guarda sesión con <code>localStorage</code> o <code>sessionStorage</code> según prefieras 'recordarme'.</li>
+      </ol>
+      <p>Puedo mostrarte el código exacto para Supabase/Firebase o para una API en Node.js.</p>
+    `;
+  }
+
+  if (/\b(api|supabase|firebase|backend|servidor)\b/i.test(q)) {
+    return `
+      <p><strong>Integración rápida con base de datos:</strong></p>
+      <ul>
+        <li><strong>Supabase:</strong> Postgres + Auth listo; ideal para mantener SQL y reglas RLS.</li>
+        <li><strong>Firebase/Firestore:</strong> NoSQL, muy simple para prototipos.</li>
+        <li>Puedo proporcionarte el snippet para conectar y guardar 'reciclajes' desde tu frontend ahora mismo.</li>
+      </ul>
+    `;
+  }
+
+  if (/\b(contacto|soporte|ayuda)\b/i.test(q)) {
+    return `
+      <p>Si necesitas soporte real:</p>
+      <ul>
+        <li>Especifica: <em>email</em> o <em>horario</em> para que te prepare el texto de contacto y la plantilla de respuesta automática.</li>
+      </ul>
+    `;
+  }
+
+  // fallback avanzado: ofrecer acciones concretas
+  return `
+    <p>No estoy seguro exactamente, pero puedo ayudar. Prueba alguna de estas acciones:</p>
+    <ol>
+      <li>Escribe <strong>"requisitos"</strong> para ver qué sistema elegir.</li>
+      <li>Completa el formulario y escribe <strong>"sugerir"</strong> o pulsa el botón <em>Sugerir Sistema Operativo</em>.</li>
+      <li>Pregunta <strong>"¿cómo guardo un reciclaje?"</strong> para ver cómo integrarlo con una base de datos.</li>
+    </ol>
+    <p>Si quieres, copia tu pregunta exacta y te doy una respuesta paso a paso.</p>
+  `;
 }
