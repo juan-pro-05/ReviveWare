@@ -326,3 +326,23 @@ select::-ms-expand { display: none; }
 .select-wrap select {
   padding-left: 52px; /* deja espacio para la badge */
 }
+/* Login modal form tweaks */
+.modal__body input[type="email"],
+.modal__body input[type="password"] {
+  border:1px solid var(--line);
+  border-radius: 10px;
+  padding:10px 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  width:100%;
+}
+
+.modal__footer .btn { min-width:90px; }
+
+/* estilos para el mensaje de sesión */
+.user-status { font-size: 0.95rem; color: var(--muted); }
+
+/* En móviles, diálogo ocupa la mayoría del viewport */
+@media (max-width:520px){
+  .modal__card { width: min(96vw, 420px); margin: 0 8px; }
+}
