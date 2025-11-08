@@ -1,6 +1,36 @@
 // ========== Utilidades ==========
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+// ----- Helper: obtener URL oficial de descarga para un SO -----
+function getOSDownloadUrl(name){
+  const n = (name || "").toLowerCase().trim();
+  const map = {
+    "ubuntu": "https://ubuntu.com/download",
+    "fedora": "https://getfedora.org/",
+    "linux mint": "https://linuxmint.com/download.php",
+    "lubuntu": "https://lubuntu.me/downloads/",
+    "xubuntu": "https://xubuntu.org/download",
+    "antix": "https://antixlinux.com/download/",
+    "puppy": "http://puppylinux.com/download.html",
+    "parrot": "https://www.parrotsec.org/download/",
+    "kali": "https://www.kali.org/get-kali/",
+    "chromeos flex": "https://chromeenterprise.google/products/chromeos-flex/",
+    "windows 10": "https://www.microsoft.com/software-download/windows10",
+    "windows 11": "https://www.microsoft.com/software-download/windows11"
+  };
+  for (const key of Object.keys(map)){
+    if (n.includes(key)) return map[key];
+  }
+  return "https://www.google.com/search?q=" + encodeURIComponent(name + " download iso");
+}
+// ----- Helper: generar lista de sistemas operativos con enlaces -----
+function renderOSLinks(lista){
+  return `<ul>${lista.map(name => {
+    const url = getOSDownloadUrl(name);
+    return `<li><a href="${url}" target="_blank" rel="noopener" style="color:#9ee8a5;text-decoration:none;font-weight:600;">${name}</a></li>`;
+  }).join("")}</ul>`;
+}
+
 
 // Estado de sesión (mock con localStorage/sessionStorage)
 const SESSION_KEY = "reviveware.session";
@@ -96,11 +126,13 @@ function updateUserUI(){
 updateUserUI();
 
 // ========== Sugeridor de Sistema Operativo ==========
+// Reemplaza la función sugerirOS() actual con esta versión mejorada:
 function sugerirOS(){
-  const cpu = parseFloat($("#cpu")?.value);
-  const ram = parseInt($("#ram")?.value, 10);
-  const hdd = parseInt($("#hdd")?.value, 10);
+  const cpu = Number($("#cpu")?.value) || 0;
+  const ram = parseInt($("#ram")?.value || "0", 10);
+  const hdd = parseInt($("#hdd")?.value || "0", 10);
   const year = parseInt($("#year")?.value || "0", 10);
+  const purpose = $("#purpose")?.value || "personal";
 
   const errores = [];
   if (isNaN(cpu) || cpu <= 0) errores.push("CPU inválida.");
@@ -112,44 +144,162 @@ function sugerirOS(){
     return;
   }
 
-  let perfil = "";
-  let sugerencias = [];
-  let notas = [];
+  // Perfil base según hardware
+  let perfilHw = "";
+  if (ram >= 8 && cpu >= 2.5 && hdd >= 128) perfilHw = "Capaz";
+  else if (ram >= 4 && cpu >= 1.6 && hdd >= 64) perfilHw = "Intermedio";
+  else if (ram >= 2 && hdd >= 32) perfilHw = "Limitado";
+  else perfilHw = "Muy limitado";
 
-  if (ram < 2 || cpu < 1.2){
-    perfil = "Muy limitado";
-    sugerencias = ["antiX Linux", "Puppy Linux", "Bodhi Linux", "Lubuntu (LTS)"];
-    if (hdd < 64) notas.push("Considera ChromeOS Flex si el almacenamiento es pequeño.");
-  } else if ((ram >= 2 && ram < 4) || cpu < 1.6){
-    perfil = "Limitado";
-    sugerencias = ["Lubuntu / Xubuntu (LTS)", "Linux Mint XFCE", "Debian XFCE (estable)"];
-    if (hdd < 64) notas.push("Usa instalación mínima o sistema en vivo.");
-  } else if (ram >= 4 && ram < 8){
-    perfil = "Intermedio";
-    sugerencias = ["Linux Mint (XFCE/Cinnamon)", "Ubuntu (GNOME optimizado)", "Windows 10 (si lo necesitas)"];
+  // Ajuste por propósito (aumenta la exigencia)
+  // factor: +1 = requiere un step superior en perfil para ciertas tareas
+  const purposePriority = {
+    personal: 0,
+    estudiante: 0,
+    maestro: 0,
+    programador: 1,
+    ciberseguridad: 1,
+    gamer: 2
+  };
+  const need = purposePriority[purpose] ?? 0;
+
+  // Calcula perfil final combinando hw y necesidad
+  // convertimos perfilHw a score para comparar
+  const hwScoreMap = { "Muy limitado": 0, "Limitado": 1, "Intermedio": 2, "Capaz": 3 };
+  const finalScore = Math.max(0, (hwScoreMap[perfilHw] || 0) - 0 + ( - (need) * -0 ) ); // simplificado
+  // En vez de cálculos confusos, hacemos reglas directas:
+  let perfilFinal = perfilHw;
+  if (need === 2) {
+    // gamer requiere al menos 'Intermedio' con CPU más alta
+    if (cpu >= 3.0 && ram >= 8 && hdd >= 256) perfilFinal = "Capaz";
+    else if (ram >= 8 && cpu >= 2.5) perfilFinal = "Intermedio";
+    else perfilFinal = "Limitado";
+  } else if (need === 1) {
+    // programador / ciberseguridad
+    if (ram >= 8 && cpu >= 2.5 && hdd >= 128) perfilFinal = "Capaz";
+    else if (ram >= 4 && cpu >= 1.8) perfilFinal = "Intermedio";
+    else perfilFinal = "Limitado";
   } else {
-    perfil = "Capaz";
-    sugerencias = ["Ubuntu/Fedora", "Linux Mint Cinnamon", "Windows 10 / Windows 11 (si cumple TPM/CPU)"];
+    // personal/estudiante/maestro
+    perfilFinal = perfilHw;
   }
 
-  if (year){
-    if (year < 2010) notas.push("Equipo muy antiguo: prioriza distros ligeras.");
-    else if (year < 2015) notas.push("Windows 10 puede ir, pero Linux ligero rendirá mejor.");
-    else if (year >= 2018) notas.push("Podría ser compatible con Windows 11; verifica TPM 2.0 y CPU.");
+  // Recomendaciones basadas en propósito y perfilFinal
+  const recomendaciones = [];
+  const notas = [];
+
+ // --- Recomendaciones por propósito (reemplazar la sección antigua) ---
+// --- Recomendaciones por propósito (actualizado según tus preferencias) ---
+if (purpose === "gamer") {
+  if (perfilFinal === "Capaz") {
+    recomendaciones.push("Windows 10/11 (mejor compatibilidad con juegos y drivers GPU)");
+    recomendaciones.push("Ubuntu/Fedora (opción para dual-boot si deseas Linux también)");
+    notas.push("GPU dedicada recomendada; 16 GB RAM ideal; SSD casi obligatorio para buenos tiempos de carga.");
+  } else if (perfilFinal === "Intermedio") {
+    recomendaciones.push("Windows 10 (si necesitas jugar con ajustes medios)");
+    recomendaciones.push("Linux (Ubuntu/Fedora) solo si no dependes de títulos AAA o usas Proton/Steam Play");
+    notas.push("Actualiza a SSD y 8–16 GB RAM para mejorar rendimiento en juegos modestos.");
+  } else {
+    recomendaciones.push("Linux ligero (Lubuntu) o considera actualizar hardware; juegos exigentes no serán viables");
+    notas.push("Si quieres jugar, considera usar una consola o PC más potente; cloud gaming es alternativa.");
   }
 
-  if (hdd < 64) notas.push("Almacenamiento reducido: usa instalaciones mínimas o ChromeOS Flex.");
-  else if (hdd < 120) notas.push("Instala solo lo esencial para ahorrar espacio.");
-  else notas.push("Un SSD mejora el rendimiento de forma notable.");
+} else if (purpose === "programador") {
+  if (perfilFinal === "Capaz") {
+    recomendaciones.push("Ubuntu (entorno de desarrollo general, ideal para Docker/servidores)");
+    recomendaciones.push("Linux Mint (entorno estable y productivo para programación)");
+    recomendaciones.push("Windows 10/11 (si dependes de herramientas Windows específicas)");
+    notas.push("8 GB RAM mínimo; 16 GB recomendado para contenedores y VMs.");
+  } else if (perfilFinal === "Intermedio") {
+    recomendaciones.push("Ubuntu (rendimiento balanceado)"); 
+    recomendaciones.push("Linux Mint XFCE (ligero y estable)");
+    notas.push("Usa SSD y evita muchas VMs simultáneas.");
+  } else {
+    recomendaciones.push("Linux Mint XFCE o Lubuntu (programación en la nube: VS Code remoto / Codespaces)");
+    notas.push("Considera ampliar RAM o usar entornos remotos para builds pesadas.");
+  }
 
-  const html = `
-    <div class="title">Perfil estimado: <span class="badge">${perfil}</span></div>
-    <p><strong>Sistemas recomendados:</strong></p>
-    <ul>${sugerencias.map(s=>`<li>${s}</li>`).join("")}</ul>
-    ${notas.length ? `<p><strong>Notas:</strong></p><ul>${notas.map(n=>`<li>${n}</li>`).join("")}</ul>` : ""}
-  `;
-  mostrarResultado("Sugerencia generada", html, "ok");
+} else if (purpose === "ciberseguridad") {
+  if (perfilFinal === "Capaz") {
+    recomendaciones.push("Kali Linux (pentesting profesional y auditorías)");
+    recomendaciones.push("Parrot OS (Security Edition — análisis forense y hacking ético)");
+    notas.push("16 GB RAM ideal para laboratorios con máquinas virtuales; 8 GB mínimo práctico.");
+  } else if (perfilFinal === "Intermedio") {
+    recomendaciones.push("Kali Linux (modo liviano o con instalación personalizada)");
+    recomendaciones.push("Parrot OS Home Edition");
+    recomendaciones.push("Ubuntu/Fedora con herramientas de seguridad (nmap, wireshark, burpsuite)");
+    notas.push("SSD y 8 GB RAM recomendados para virtualización ligera.");
+  } else {
+    recomendaciones.push("Kali Linux Lite (herramientas esenciales) y plataformas en la nube como TryHackMe");
+    notas.push("Si el hardware falla, usa entornos cloud o laboratorios remotos.");
+  }
+
+} else if (purpose === "maestro") {
+  // Recomendación especial para docentes: Windows 11 (compatibilidad) o Ubuntu (open-source y estable)
+  if (perfilFinal === "Capaz" || perfilFinal === "Intermedio") {
+    recomendaciones.push("Windows 11 (optimizado para productividad y herramientas educativas)");
+    recomendaciones.push("Ubuntu (ideal si prefieres software libre y entornos estables para docencia)");
+    notas.push("Ambas opciones son buenas: Windows para compatibilidad con software de aula; Ubuntu si quieres reproducibilidad y entornos ligeros.");
+  } else {
+    recomendaciones.push("Linux Mint XFCE o Lubuntu (uso docente básico y presentaciones).");
+    notas.push("Prioriza SSD y al menos 4–8 GB RAM para buenas sesiones en clase.");
+  }
+
+} else if (purpose === "estudiante") {
+  // Estudiantes: flexible entre Windows y Linux según hardware
+  if (perfilFinal === "Capaz") {
+    recomendaciones.push("Windows 10/11 (compatible con la mayoría de software educativo)");
+    recomendaciones.push("Ubuntu (buena alternativa libre, ideal para programación y trabajos técnicos)");
+    notas.push("SSD + 8 GB RAM ofrece experiencia fluida.");
+  } else if (perfilFinal === "Intermedio") {
+    recomendaciones.push("Windows 10 (si necesitas software específico de tu carrera)");
+    recomendaciones.push("Linux Mint XFCE (ligero y adecuado para estudio y programación básica)");
+    notas.push("Evita múltiples aplicaciones pesadas abiertas simultáneamente.");
+  } else {
+    recomendaciones.push("Linux ligero (Lubuntu, Puppy) o ChromeOS Flex (si tu uso es principalmente navegador)");
+    notas.push("Considera usar servicios en la nube para trabajos pesados.");
+  }
+
+} else {
+  // personal / uso por defecto si no coincide con categorías
+  if (perfilFinal === "Capaz") {
+    recomendaciones.push("Windows 10/11 (experiencia completa y amplia compatibilidad)");
+    recomendaciones.push("Ubuntu/Mint (si prefieres software libre)");
+    notas.push("SSD + 8 GB RAM mejora mucho la experiencia.");
+  } else if (perfilFinal === "Intermedio") {
+    recomendaciones.push("Windows 10 o Linux Mint XFCE (según preferencia de compatibilidad o ligereza)");
+    notas.push("SSD recomendado y cerrar apps innecesarias para mejor rendimiento.");
+  } else {
+    recomendaciones.push("Linux ligero (Puppy, antiX, Lubuntu) para mantener el equipo usable");
+    notas.push("Prioriza aumentar RAM y cambiar a SSD cuando sea posible.");
+  }
 }
+
+
+  // Ajustes por año y disco
+  if (year && year < 2012) notas.push("Equipo antiguo: prioriza aumentar RAM y cambiar a SSD antes de cambiar de S.O.");
+  if (hdd < 64) notas.push("Poco espacio: considera ChromeOS Flex o instalaciones mínimas.");
+
+  // Construcción del HTML de salida
+  const purposeTextMap = {
+    personal: "Uso personal / Oficina básica",
+    estudiante: "Estudiante",
+    maestro: "Maestro / Docencia",
+    programador: "Programador / Desarrollo",
+    ciberseguridad: "Analista de ciberseguridad",
+    gamer: "Gamer"
+  };
+  const html = `
+    <div class="title">Propósito: <span class="badge">${purposeTextMap[purpose] || purpose}</span></div>
+    <p><strong>Perfil hardware detectado:</strong> ${perfilHw} → <strong>Perfil recomendado según uso:</strong> ${perfilFinal}</p>
+    <p><strong>Sistemas recomendados:</strong></p>
+    ${renderOSLinks(recomendaciones)}
+    ${notas.length ? `<p><strong>Notas y recomendaciones:</strong></p><ul>${notas.map(n=>`<li>${n}</li>`).join("")}</ul>` : ""}
+  `;
+
+  mostrarResultado("Sugerencia personalizada", html, "ok");
+}
+
 
 function mostrarResultado(titulo, contenidoHTML, tipo="ok"){
   const box = $("#resultado");

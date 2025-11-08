@@ -253,3 +253,76 @@ input:focus{
   border-top: 1px solid var(--line);
   background: #14181e;
 }
+/* ===== Estilo moderno para <select> ===== */
+select#purpose,
+select {
+  -webkit-appearance: none; /* quita apariencia nativa en WebKit */
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  display: inline-block;
+  padding: 12px 44px 12px 14px; /* espacio para la flecha a la derecha */
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--surface-2), color-mix(in oklab, var(--surface-2) 92%, black 8%));
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: .18s box-shadow, .18s transform, .18s border-color;
+  position: relative;
+  box-shadow: none;
+}
+
+/* Flecha personalizada (SVG inline como fondo) */
+select#purpose {
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.02), transparent),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23A8B0BF' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+}
+
+/* Hover y foco */
+select#purpose:hover {
+  border-color: color-mix(in oklab, var(--accent) 40%, var(--line));
+}
+select#purpose:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus);
+  transform: translateY(-1px);
+}
+
+/* Forzar color de las opciones (algunas plataformas lo ignoran) */
+select#purpose option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Compatibilidad IE/Edge: oculta el botón nativo */
+select::-ms-expand { display: none; }
+
+/* Versión compacta para móviles (si quieres menos padding) */
+@media (max-width: 520px){
+  select#purpose { padding-right: 38px; padding-left: 12px; }
+}
+
+/* Opcional: una pequeña etiqueta a la izquierda (badge) dentro del select wrapper */
+/* Para esto necesitarías envolver el select en un .select-wrap (ver nota abajo) */
+.select-wrap {
+  position: relative;
+}
+.select-wrap .select-badge {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.select-wrap select {
+  padding-left: 52px; /* deja espacio para la badge */
+}
